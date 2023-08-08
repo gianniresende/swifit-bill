@@ -2,18 +2,20 @@ FROM ruby:3.0.0
 
 RUN apt-get update -qq && apt-get install -y build-essential apt-utils libpq-dev nodejs
 
-WORKDIR /docker/app
+ENV INSTALL_PATH /app
 
-RUN gem install bundler
+RUN mkdir -p $INSTALL_PATH
 
-COPY Gemfile* ./
+WORKDIR $INSTALL_PATH
 
-RUN bundle install
+RUN chmod -R 777 $INSTALL_PATH
 
-ADD . /docker/app
+COPY Gemfile ./
 
-ARG DEFAULT_PORT 3000
+ENV BUNDLE_PATH /gems
 
-EXPOSE ${DEFAULT_PORT}
+RUN gem install bundler && bundle install --jobs=3 --retry=3
+
+COPY . .
 
 CMD [ "bundle","exec", "puma", "config.ru"] # CMD ["rails","server"] # you can also write like this.
